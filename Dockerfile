@@ -1,4 +1,6 @@
 # # Test stage
+# docker build --target test -t todobackend-test .
+# docker run -it --rm todobackend-test
 FROM alpine AS test
 LABEL application=todobackend
 
@@ -25,21 +27,24 @@ WORKDIR /app
 CMD ["python3", "manage.py", "test", "--noinput", "--settings=todobackend.settings_test"]
 
 # # Release stage
-# FROM alpine
-# LABEL application=todobackend
+# docker build -t todobackend-release .
+# docker run -it --rm -p 8000:8000 todobackend-release uwsgi \
+#   --http=0.0.0.0:8000 --module=todobackend.wsgi --master
+FROM alpine
+LABEL application=todobackend
 
 # # Install operating system dependencies
-# RUN apk add --no-cache python3 mariadb-client bash curl bats jq
+RUN apk add --no-cache python3 mariadb-client bash curl bats jq
 
 # # Create app user
-# RUN addgroup -g 1000 app && \
-#     adduser -u 1000 -G app -D app
+RUN addgroup -g 1000 app && \
+    adduser -u 1000 -G app -D app
 
 # # Copy and install application source and pre-built dependencies
-# COPY --from=test --chown=app:app /build /build
-# COPY --from=test --chown=app:app /app /app
-# RUN pip3 install -r /build/requirements.txt -f /build --no-index --no-cache-dir
-# RUN rm -rf /build
+COPY --from=test --chown=app:app /build /build
+COPY --from=test --chown=app:app /app /app
+RUN pip3 install -r /build/requirements.txt -f /build --no-index --no-cache-dir
+RUN rm -rf /build
 
 # # Create public volume
 # RUN mkdir /public
@@ -47,5 +52,5 @@ CMD ["python3", "manage.py", "test", "--noinput", "--settings=todobackend.settin
 # VOLUME /public
 
 # # Set working directory and application user
-# WORKDIR /app
-# USER app
+WORKDIR /app
+USER app
