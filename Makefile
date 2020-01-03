@@ -1,4 +1,4 @@
-.PHONY: test
+.PHONY: test release clean
 
 export APP_VERSION ?= $(shell git rev-parse --short HEAD)
 
